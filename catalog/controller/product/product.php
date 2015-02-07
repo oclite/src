@@ -1,0 +1,534 @@
+<?php
+class ControllerProductProduct extends Controller {
+	private $error = array();
+	public function index() {
+		$this->load->language('product/product');
+		$data['breadcrumbs'] = array();
+		$data['breadcrumbs'][] = array(
+			'text' => $this->language->get('text_home'),
+			'href' => $this->url->link('common/home')
+		);
+		$this->load->model('catalog/category');
+		if (isset($this->request->get['path'])) {
+			$path = '';
+			$parts = explode('_', (string)$this->request->get['path']);
+			$category_id = (int)array_pop($parts);
+			foreach ($parts as $path_id) {
+				if (!$path) {
+					$path = $path_id;
+				} else {
+					$path .= '_' . $path_id;
+				}
+				$category_info = $this->model_catalog_category->getCategory($path_id);
+				if ($category_info) {
+					$data['breadcrumbs'][] = array(
+						'text' => $category_info['name'],
+						'href' => $this->url->link('product/category', 'path=' . $path)
+					);
+				}
+			}
+			// Set the last category breadcrumb
+			$category_info = $this->model_catalog_category->getCategory($category_id);
+			if ($category_info) {
+				$url = '';
+				if (isset($this->request->get['sort'])) {
+					$url .= '&sort=' . $this->request->get['sort'];
+				}
+				if (isset($this->request->get['order'])) {
+					$url .= '&order=' . $this->request->get['order'];
+				}
+				if (isset($this->request->get['page'])) {
+					$url .= '&page=' . $this->request->get['page'];
+				}
+				if (isset($this->request->get['limit'])) {
+					$url .= '&limit=' . $this->request->get['limit'];
+				}
+				$data['breadcrumbs'][] = array(
+					'text' => $category_info['name'],
+					'href' => $this->url->link('product/category', 'path=' . $this->request->get['path'].$url)
+				);
+			}
+		}
+		$this->load->model('catalog/manufacturer');
+		if (isset($this->request->get['manufacturer_id'])) {
+			$data['breadcrumbs'][] = array(
+				'text' => $this->language->get('text_brand'),
+				'href' => $this->url->link('product/manufacturer')
+			);
+			$url = '';
+			if (isset($this->request->get['sort'])) {
+				$url .= '&sort=' . $this->request->get['sort'];
+			}
+			if (isset($this->request->get['order'])) {
+				$url .= '&order=' . $this->request->get['order'];
+			}
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}
+			if (isset($this->request->get['limit'])) {
+				$url .= '&limit=' . $this->request->get['limit'];
+			}
+			$manufacturer_info = $this->model_catalog_manufacturer->getManufacturer($this->request->get['manufacturer_id']);
+			if ($manufacturer_info) {
+				$data['breadcrumbs'][] = array(
+					'text' => $manufacturer_info['name'],
+					'href' => $this->url->link('product/manufacturer/info', 'manufacturer_id=' . $this->request->get['manufacturer_id'] . $url)
+				);
+			}
+		}
+		if (isset($this->request->get['search']) || isset($this->request->get['tag'])) {
+			$url = '';
+			if (isset($this->request->get['search'])) {
+				$url .= '&search=' . $this->request->get['search'];
+			}
+			if (isset($this->request->get['tag'])) {
+				$url .= '&tag=' . $this->request->get['tag'];
+			}
+			if (isset($this->request->get['description'])) {
+				$url .= '&description=' . $this->request->get['description'];
+			}
+			if (isset($this->request->get['category_id'])) {
+				$url .= '&category_id=' . $this->request->get['category_id'];
+			}
+			if (isset($this->request->get['sub_category'])) {
+				$url .= '&sub_category=' . $this->request->get['sub_category'];
+			}
+			if (isset($this->request->get['sort'])) {
+				$url .= '&sort=' . $this->request->get['sort'];
+			}
+			if (isset($this->request->get['order'])) {
+				$url .= '&order=' . $this->request->get['order'];
+			}
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}
+			if (isset($this->request->get['limit'])) {
+				$url .= '&limit=' . $this->request->get['limit'];
+			}
+			$data['breadcrumbs'][] = array(
+				'text' => $this->language->get('text_search'),
+				'href' => $this->url->link('product/search', $url)
+			);
+		}
+		if (isset($this->request->get['product_id'])) {
+			$product_id = (int)$this->request->get['product_id'];
+		} else {
+			$product_id = 0;
+		}
+		$this->load->model('catalog/product');
+		$product_info = $this->model_catalog_product->getProduct($product_id);
+		$data['stocks'] = $this->model_catalog_product->getStocksPrice($product_id);
+		if ($product_info) {
+			$url = '';
+			if (isset($this->request->get['path'])) {
+				$url .= '&path=' . $this->request->get['path'];
+			}
+			if (isset($this->request->get['filter'])) {
+				$url .= '&filter=' . $this->request->get['filter'];
+			}
+			if (isset($this->request->get['manufacturer_id'])) {
+				$url .= '&manufacturer_id=' . $this->request->get['manufacturer_id'];
+			}
+			if (isset($this->request->get['search'])) {
+				$url .= '&search=' . $this->request->get['search'];
+			}
+			if (isset($this->request->get['tag'])) {
+				$url .= '&tag=' . $this->request->get['tag'];
+			}
+			if (isset($this->request->get['description'])) {
+				$url .= '&description=' . $this->request->get['description'];
+			}
+			if (isset($this->request->get['category_id'])) {
+				$url .= '&category_id=' . $this->request->get['category_id'];
+			}
+			if (isset($this->request->get['sub_category'])) {
+				$url .= '&sub_category=' . $this->request->get['sub_category'];
+			}
+			if (isset($this->request->get['sort'])) {
+				$url .= '&sort=' . $this->request->get['sort'];
+			}
+			if (isset($this->request->get['order'])) {
+				$url .= '&order=' . $this->request->get['order'];
+			}
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}
+			if (isset($this->request->get['limit'])) {
+				$url .= '&limit=' . $this->request->get['limit'];
+			}
+			$data['breadcrumbs'][] = array(
+				'text' => $product_info['name'],
+				'href' => $this->url->link('product/product', $url . '&product_id=' . $this->request->get['product_id'])
+			);
+			$data['price'] = (float)$product_info['price'];
+			$data['special'] = (float)$product_info['special'];
+			if(strlen($product_info['meta_title']) < 3)
+			{
+				if($data['price'] > 0)
+				{
+					$product_info['meta_title'] = $product_info['name'] . ' - ' . $this->currency->format(($data['special'] >0)? $data['special'] : $data['price']);
+				}
+				else $product_info['meta_title'] = $product_info['name'];
+			}
+			$price = ($data['special'] >0)? $data['special'] : $data['price'];
+			if($price > 0) array_unshift($data['stocks'],array('product_id'=>$product_info['product_id'],'stock_id'=>0,'quantity'=>$product_info['quantity'],'price'=>$price,'stock_name'=>$this->language->get('text_local'),'term'=>0));
+			foreach($data['stocks'] as &$stock){
+				$stock['term'] = sprintf($this->language->get('text_term'), $stock['term']);
+				$stock['price'] = $this->currency->format($stock['price']);
+			}
+			$this->document->setTitle($product_info['meta_title']);
+			$this->document->setDescription($product_info['meta_description']);
+			$this->document->setKeywords($product_info['meta_keyword']);
+			$this->document->addLink($this->url->link('product/product', 'product_id=' . $this->request->get['product_id']), 'canonical');
+			$this->document->addScript('catalog/view/javascript/jquery/magnific/jquery.magnific-popup.min.js');
+			$this->document->addStyle('catalog/view/javascript/jquery/magnific/magnific-popup.css');
+			$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/moment.min.js');
+			$this->document->addScript('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.js');
+			$this->document->addStyle('catalog/view/javascript/jquery/datetimepicker/bootstrap-datetimepicker.min.css');
+			$data['heading_title'] = $product_info['name'];
+			$data['text_select'] = $this->language->get('text_select');
+			$data['text_manufacturer'] = $this->language->get('text_manufacturer');
+			$data['text_model'] = $this->language->get('text_model');
+			$data['text_qty'] = $this->language->get('text_qty');
+			$data['text_in_pack'] = $this->language->get('text_in_pack');
+			$data['text_unit_price'] = $this->language->get('text_unit_price');
+			$data['text_price'] = $this->language->get('text_price');
+			$data['text_stock'] = $this->language->get('text_stock');
+			$data['text_option'] = $this->language->get('text_option');
+			$data['text_minimum'] = sprintf($this->language->get('text_minimum'), $product_info['minimum']);
+			$data['text_write'] = $this->language->get('text_write');
+			$data['text_login'] = sprintf($this->language->get('text_login'), $this->url->link('account/login', '', 'SSL'), $this->url->link('account/register', '', 'SSL'));
+			$data['text_note'] = $this->language->get('text_note');
+			$data['text_tags'] = $this->language->get('text_tags');
+			$data['text_loading'] = $this->language->get('text_loading');
+			$data['entry_qty'] = $this->language->get('entry_qty');
+			$data['entry_name'] = $this->language->get('entry_name');
+			$data['text_related'] = $this->language->get('text_related');
+			$data['entry_review'] = $this->language->get('entry_review');
+			$data['entry_rating'] = $this->language->get('entry_rating');
+			$data['entry_good'] = $this->language->get('entry_good');
+			$data['entry_bad'] = $this->language->get('entry_bad');
+			$data['entry_captcha'] = $this->language->get('entry_captcha');
+			$data['button_cart'] = $this->language->get('button_cart');
+			$data['button_wishlist'] = $this->language->get('button_wishlist');
+			$data['button_compare'] = $this->language->get('button_compare');
+			$data['button_upload'] = $this->language->get('button_upload');
+			$data['button_continue'] = $this->language->get('button_continue');
+			$this->load->model('catalog/review');
+			$data['tab_description'] = $this->language->get('tab_description');
+			$data['tab_attribute'] = $this->language->get('tab_attribute');
+			$data['tab_video'] = $this->language->get('tab_video');
+			$data['tab_files'] = $this->language->get('tab_files');
+			$data['tab_review'] = sprintf($this->language->get('tab_review'), $product_info['reviews']);
+			$data['product_id'] = (int)$this->request->get['product_id'];
+			$data['qpbox'] = (int)$product_info['qpbox'];
+			$data['manufacturer'] = $product_info['manufacturer'];
+			$data['manufacturers'] = $this->url->link('product/manufacturer/info', 'manufacturer_id=' . $product_info['manufacturer_id']);
+			$data['model'] = $product_info['model'];
+			if ($product_info['quantity'] <= 0) {
+				$data['qty'] = $product_info['stock_status_id'];
+			} elseif ($this->config->get('config_stock_display')) {
+				$data['qty'] = $product_info['quantity'];
+			} else $data['qty'] = $this->language->get('text_instock');
+			$this->load->model('tool/image');
+			if ($product_info['image']) {
+				$data['popup'] = $this->model_tool_image->resize($product_info['image'], $this->config->get('config_image_popup_width'), $this->config->get('config_image_popup_height'));
+			} else $data['popup'] = '';
+			if ($product_info['image']) {
+				$data['thumb'] = $this->model_tool_image->resize($product_info['image'], $this->config->get('config_image_thumb_width'), $this->config->get('config_image_thumb_height'));
+			} else $data['thumb'] = '';
+			$data['images'] = array();
+			$results = $this->model_catalog_product->getProductImages($this->request->get['product_id']);
+			foreach ($results as $result) {
+				$data['images'][] = array(
+					'popup' => $this->model_tool_image->resize($result, $this->config->get('config_image_popup_width'), $this->config->get('config_image_popup_height')),
+					'thumb' => $this->model_tool_image->resize($result, $this->config->get('config_image_additional_width'), $this->config->get('config_image_additional_height'))
+				);
+			}
+			if($data['qpbox'] > 1 && $data['price']){
+				if($data['special'] > 0) $data['unit_price'] = $this->currency->format($data['special'] / $data['qpbox']);
+				else $data['unit_price'] = $this->currency->format($data['price'] / $data['qpbox']);
+			}
+			if($data['price'] > 0) $data['price'] = $this->currency->format($data['price']);
+			if($data['special'] > 0) $data['special'] = $this->currency->format($data['special']);
+			$data['options'] = array();
+			foreach ($this->model_catalog_product->getProductOptions($this->request->get['product_id']) as $option) {
+				$product_option_value_data = array();
+				foreach ($option['product_option_value'] as $option_value) {
+					if (!$option_value['subtract'] || ($option_value['quantity'] > 0)) {
+						if ((($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) && (float)$option_value['price']) {
+							$price = $this->currency->format($option_value['price']);
+						} else {
+							$price = false;
+						}
+						$product_option_value_data[] = array(
+							'product_option_value_id' => $option_value['product_option_value_id'],
+							'option_value_id'         => $option_value['option_value_id'],
+							'name'                    => $option_value['name'],
+							'image'                   => $this->model_tool_image->resize($option_value['image'], 50, 50),
+							'price'                   => $price,
+							'price_prefix'            => $option_value['price_prefix']
+						);
+					}
+				}
+				$data['options'][] = array(
+					'product_option_id'    => $option['product_option_id'],
+					'product_option_value' => $product_option_value_data,
+					'option_id'            => $option['option_id'],
+					'name'                 => $option['name'],
+					'type'                 => $option['type'],
+					'value'                => $option['value'],
+					'required'             => $option['required']
+				);
+			}
+			if ($product_info['minimum']) {
+				$data['minimum'] = $product_info['minimum'];
+			} else $data['minimum'] = 1;
+			$data['review_status'] = $this->config->get('config_review_status');
+			if ($this->config->get('config_review_guest') || $this->customer->isLogged()) {
+				$data['review_guest'] = true;
+			} else $data['review_guest'] = false;
+			if ($this->customer->isLogged()) {
+				$data['customer_name'] = $this->customer->getFirstName() . '&nbsp;' . $this->customer->getLastName();
+			} else $data['customer_name'] = '';
+			$data['reviews'] = sprintf($this->language->get('text_reviews'), (int)$product_info['reviews']);
+			$data['rating'] = (int)$product_info['rating'];
+			$data['description'] = html_entity_decode($product_info['description'], ENT_QUOTES, 'UTF-8');
+			$data['attribute_groups'] = $this->model_catalog_product->getProductAttributes($this->request->get['product_id']);
+			$data['files'] = ($product_info['files']) ? $product_info['files'] : array();
+			$data['video'] = html_entity_decode($product_info['video'], ENT_QUOTES, 'UTF-8');
+			$data['products'] = array();
+			if(!empty($product_info['related'])){
+				$related = explode(';', $product_info['related']);
+				foreach ($related as $rid) {
+					$result = $this->model_catalog_product->getProduct($rid);
+					if ($result['image']) {
+						$image = $this->model_tool_image->resize($result['image'], $this->config->get('config_image_related_width'), $this->config->get('config_image_related_height'));
+					} else $image = false;
+					$price = ($result['price'] > 0)? $this->currency->format($result['price']) : false;
+					$special = ((float)$result['special'])? $this->currency->format($result['special']) : false;
+					$rating = ($this->config->get('config_review_status'))? (int)$result['rating'] : false;
+					$data['products'][] = array(
+						'product_id'	=> $result['product_id'],
+						'thumb'			=> $image,
+						'name'			=> $result['name'],
+						'description'	=> utf8_substr(strip_tags(html_entity_decode($result['description'], ENT_QUOTES, 'UTF-8')), 0, $this->config->get('config_product_description_length')) . '..',
+						'price'			=> $price,
+						'special'		=> $special,
+						'rating'		=> $rating,
+						'reviews'		=> sprintf($this->language->get('text_reviews'), (int)$result['reviews']),
+						'href'			=> $this->url->link('product/product', 'product_id=' . $result['product_id'])
+					);
+				}
+			}
+			$data['tags'] = array();
+			if ($product_info['tag']) {
+				$tags = explode(',', $product_info['tag']);
+				foreach ($tags as $tag) {
+					$data['tags'][] = array(
+						'tag'  => trim($tag),
+						'href' => $this->url->link('product/search', 'tag=' . trim($tag))
+					);
+				}
+			}
+			$data['text_payment_profile'] = $this->language->get('text_payment_profile');
+			$this->model_catalog_product->updateViewed($this->request->get['product_id']);
+			$data['column_left'] = $this->load->controller('common/column_left');
+			$data['column_right'] = $this->load->controller('common/column_right');
+			$data['content_top'] = $this->load->controller('common/content_top');
+			$data['content_bottom'] = $this->load->controller('common/content_bottom');
+			$data['footer'] = $this->load->controller('common/footer');
+			$data['header'] = $this->load->controller('common/header');
+			if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/product/product.tpl')) {
+				$this->response->setOutput($this->load->view($this->config->get('config_template') . '/template/product/product.tpl', $data));
+			} else {
+				$this->response->setOutput($this->load->view('default/template/product/product.tpl', $data));
+			}
+		} else {
+			$url = '';
+			if (isset($this->request->get['path'])) {
+				$url .= '&path=' . $this->request->get['path'];
+			}
+			if (isset($this->request->get['filter'])) {
+				$url .= '&filter=' . $this->request->get['filter'];
+			}
+			if (isset($this->request->get['manufacturer_id'])) {
+				$url .= '&manufacturer_id=' . $this->request->get['manufacturer_id'];
+			}
+			if (isset($this->request->get['search'])) {
+				$url .= '&search=' . $this->request->get['search'];
+			}
+			if (isset($this->request->get['tag'])) {
+				$url .= '&tag=' . $this->request->get['tag'];
+			}
+			if (isset($this->request->get['description'])) {
+				$url .= '&description=' . $this->request->get['description'];
+			}
+			if (isset($this->request->get['category_id'])) {
+				$url .= '&category_id=' . $this->request->get['category_id'];
+			}
+			if (isset($this->request->get['sub_category'])) {
+				$url .= '&sub_category=' . $this->request->get['sub_category'];
+			}
+			if (isset($this->request->get['sort'])) {
+				$url .= '&sort=' . $this->request->get['sort'];
+			}
+			if (isset($this->request->get['order'])) {
+				$url .= '&order=' . $this->request->get['order'];
+			}
+			if (isset($this->request->get['page'])) {
+				$url .= '&page=' . $this->request->get['page'];
+			}
+			if (isset($this->request->get['limit'])) {
+				$url .= '&limit=' . $this->request->get['limit'];
+			}
+      		$data['breadcrumbs'][] = array(
+        		'text' => $this->language->get('text_error'),
+				'href' => $this->url->link('product/product', $url . '&product_id=' . $product_id)
+      		);
+      		$this->document->setTitle($this->language->get('text_error'));
+      		$data['heading_title'] = $this->language->get('text_error');
+      		$data['text_error'] = $this->language->get('text_error');
+      		$data['button_continue'] = $this->language->get('button_continue');
+      		$data['continue'] = $this->url->link('common/home');
+			$data['column_left'] = $this->load->controller('common/column_left');
+			$data['column_right'] = $this->load->controller('common/column_right');
+			$data['content_top'] = $this->load->controller('common/content_top');
+			$data['content_bottom'] = $this->load->controller('common/content_bottom');
+			$data['footer'] = $this->load->controller('common/footer');
+			$data['header'] = $this->load->controller('common/header');
+			if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/error/not_found.tpl')) {
+				$this->response->setOutput($this->load->view($this->config->get('config_template') . '/template/error/not_found.tpl', $data));
+			} else {
+				$this->response->setOutput($this->load->view('default/template/error/not_found.tpl', $data));
+			}
+    	}
+  	}
+	public function review() {
+    	$this->load->language('product/product');
+		$this->load->model('catalog/review');
+		$data['text_no_reviews'] = $this->language->get('text_no_reviews');
+		if (isset($this->request->get['page'])) {
+			$page = $this->request->get['page'];
+		} else {
+			$page = 1;
+		}
+		$data['reviews'] = array();
+		$review_total = $this->model_catalog_review->getTotalReviewsByProductId($this->request->get['product_id']);
+		$results = $this->model_catalog_review->getReviewsByProductId($this->request->get['product_id'], ($page - 1) * 5, 5);
+		foreach ($results as $result) {
+        	$data['reviews'][] = array(
+        		'author'     => $result['author'],
+				'text'       => $result['text'],
+				'rating'     => (int)$result['rating'],
+        		'date_added' => date($this->language->get('date_format_short'), strtotime($result['date_added']))
+        	);
+      	}
+		$pagination = new Pagination();
+		$pagination->total = $review_total;
+		$pagination->page = $page;
+		$pagination->limit = 5;
+		$pagination->url = $this->url->link('product/product/review', 'product_id=' . $this->request->get['product_id'] . '&page={page}');
+		$data['pagination'] = $pagination->render();
+		$data['results'] = sprintf($this->language->get('text_pagination'), ($review_total) ? (($page - 1) * 5) + 1 : 0, ((($page - 1) * 5) > ($review_total - 5)) ? $review_total : ((($page - 1) * 5) + 5), $review_total, ceil($review_total / 5));
+		if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/product/review.tpl')) {
+			$this->response->setOutput($this->load->view($this->config->get('config_template') . '/template/product/review.tpl', $data));
+		} else {
+			$this->response->setOutput($this->load->view('default/template/product/review.tpl', $data));
+		}
+	}
+	public function write() {
+		$this->load->language('product/product');
+		$json = array();
+		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
+			if ((utf8_strlen($this->request->post['name']) < 3) || (utf8_strlen($this->request->post['name']) > 25)) {
+				$json['error'] = $this->language->get('error_name');
+			}
+			if ((utf8_strlen($this->request->post['text']) < 25) || (utf8_strlen($this->request->post['text']) > 1000)) {
+				$json['error'] = $this->language->get('error_text');
+			}
+			if (empty($this->request->post['rating'])) {
+				$json['error'] = $this->language->get('error_rating');
+			}
+			if (empty($this->session->data['captcha']) || ($this->session->data['captcha'] != $this->request->post['captcha'])) {
+				$json['error'] = $this->language->get('error_captcha');
+			}
+			if (!isset($json['error'])) {
+				$this->load->model('catalog/review');
+				$this->model_catalog_review->addReview($this->request->get['product_id'], $this->request->post);
+				$json['success'] = $this->language->get('text_success');
+			}
+		}
+		$this->response->setOutput(json_encode($json));
+	}
+	public function captcha() {
+		$this->session->data['captcha'] = substr(sha1(mt_rand()), 17, 6);
+		$image = imagecreatetruecolor(150, 35);
+		$width = imagesx($image);
+		$height = imagesy($image);
+		$black = imagecolorallocate($image, 0, 0, 0);
+		$white = imagecolorallocate($image, 255, 255, 255);
+		$red = imagecolorallocatealpha($image, 255, 0, 0, 75);
+		$green = imagecolorallocatealpha($image, 0, 255, 0, 75);
+		$blue = imagecolorallocatealpha($image, 0, 0, 255, 75);
+		imagefilledrectangle($image, 0, 0, $width, $height, $white);
+		imagefilledellipse($image, ceil(rand(5, 145)), ceil(rand(0, 35)), 30, 30, $red);
+		imagefilledellipse($image, ceil(rand(5, 145)), ceil(rand(0, 35)), 30, 30, $green);
+		imagefilledellipse($image, ceil(rand(5, 145)), ceil(rand(0, 35)), 30, 30, $blue);
+		imagefilledrectangle($image, 0, 0, $width, 0, $black);
+		imagefilledrectangle($image, $width - 1, 0, $width - 1, $height - 1, $black);
+		imagefilledrectangle($image, 0, 0, 0, $height - 1, $black);
+		imagefilledrectangle($image, 0, $height - 1, $width, $height - 1, $black);
+		imagestring($image, 10, intval(($width - (strlen($this->session->data['captcha']) * 9)) / 2), intval(($height - 15) / 2), $this->session->data['captcha'], $black);
+		header('Content-type: image/jpeg');
+		imagejpeg($image);
+		imagedestroy($image);
+	}
+	public function upload() {
+		$this->load->language('product/product');
+		$json = array();
+		if (!empty($this->request->files['file']['name'])) {
+			// Sanitize the filename
+			$filename = basename(preg_replace('/[^a-zA-Z0-9\.\-\s+]/', '', html_entity_decode($this->request->files['file']['name'], ENT_QUOTES, 'UTF-8')));
+			// Validate the filename length
+			if ((utf8_strlen($filename) < 3) || (utf8_strlen($filename) > 64)) {
+        		$json['error'] = $this->language->get('error_filename');
+	  		}
+			// Allowed file extension types
+			$allowed = array();
+			$extension_allowed = preg_replace('~\r?\n~', "\n", $this->config->get('config_file_extension_allowed'));
+			$filetypes = explode("\n", $extension_allowed);
+			foreach ($filetypes as $filetype) {
+				$allowed[] = trim($filetype);
+			}
+			if (!in_array(strtolower(substr(strrchr($filename, '.'), 1)), $allowed)) {
+				$json['error'] = $this->language->get('error_filetype');
+       		}
+			// Allowed file mime types
+		    $allowed = array();
+			$mime_allowed = preg_replace('~\r?\n~', "\n", $this->config->get('config_file_mime_allowed'));
+			$filetypes = explode("\n", $mime_allowed);
+			foreach ($filetypes as $filetype) {
+				$allowed[] = trim($filetype);
+			}
+			if (!in_array($this->request->files['file']['type'], $allowed)) {
+				$json['error'] = $this->language->get('error_filetype');
+			}
+			// Return any upload error
+			if ($this->request->files['file']['error'] != UPLOAD_ERR_OK) {
+				$json['error'] = $this->language->get('error_upload_' . $this->request->files['file']['error']);
+			}
+		} else {
+			$json['error'] = $this->language->get('error_upload');
+		}
+		if (!$json) {
+			$file = $filename . '.' . md5(mt_rand());
+			move_uploaded_file($this->request->files['file']['tmp_name'], DIR_DOWNLOAD . $file);
+			// Hide the uploaded file name so people can not link to it directly.
+			$this->load->model('tool/upload');
+			$json['code'] = $this->model_tool_upload->addUpload($filename, $file);
+			$json['success'] = $this->language->get('text_upload');
+		}
+		$this->response->setOutput(json_encode($json));
+	}
+}

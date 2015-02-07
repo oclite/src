@@ -1,0 +1,87 @@
+<?php
+class ModelCatalogManufacturer extends Model {
+	public function addManufacturer($data) {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "manufacturer` SET `name` = '" . $this->db->escape($data['name']) . "',".(isset($data['description'])? " `description` = '" . $this->db->escape($data['description']) . "'," : "").(isset($data['image'])? " `image` = '" . $this->db->escape($data['image']) . "'," : "")." `sort_order` = '" . (int)$data['sort_order'] . "'");
+
+		$manufacturer_id = $this->db->getLastId();
+
+		if (isset($data['seourl'])) {
+			$this->db->query("INSERT INTO `" . DB_PREFIX . "url_alias` SET `query` = 'manufacturer_id=" . (int)$manufacturer_id . "', `keyword` = '" . $this->db->escape($data['seourl']) . "'");
+		}
+
+		$this->cache->delete('manufacturer');
+	}
+
+	public function editManufacturer($manufacturer_id, $data) {
+		$this->db->query("UPDATE `" . DB_PREFIX . "manufacturer` SET `name` = '" . $this->db->escape($data['name']) . "',".(isset($data['description'])? " `description` = '" . $this->db->escape($data['description']) . "'," : "").(isset($data['image'])? " `image` = '" . $this->db->escape($data['image']) . "'," : "")." `sort_order` = '" . (int)$data['sort_order'] . "' WHERE `manufacturer_id` = '" . (int)$manufacturer_id . "'");
+
+
+		$this->db->query("DELETE FROM " . DB_PREFIX . "url_alias WHERE query = 'manufacturer_id=" . (int)$manufacturer_id. "'");
+
+		if ($data['seourl']) {
+			$this->db->query("INSERT INTO `" . DB_PREFIX . "url_alias` SET `query` = 'manufacturer_id=" . (int)$manufacturer_id . "', `keyword` = '" . $this->db->escape($data['seourl']) . "'");
+		}
+
+		$this->cache->delete('manufacturer');
+	}
+
+	public function deleteManufacturer($manufacturer_id) {
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "manufacturer` WHERE `manufacturer_id` = '" . (int)$manufacturer_id . "'");
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "url_alias` WHERE `query` = 'manufacturer_id=" . (int)$manufacturer_id . "'");
+
+		$this->cache->delete('manufacturer');
+	}
+
+	public function getManufacturer($manufacturer_id) {
+		$query = $this->db->query("SELECT DISTINCT *, (SELECT `keyword` FROM `" . DB_PREFIX . "url_alias` WHERE `query` = 'manufacturer_id=" . (int)$manufacturer_id . "') AS seourl FROM `" . DB_PREFIX . "manufacturer` WHERE `manufacturer_id` = '" . (int)$manufacturer_id . "'");
+
+		return $query->row;
+	}
+
+	public function getManufacturers($data = array()) {
+		$sql = "SELECT * FROM `" . DB_PREFIX . "manufacturer`";
+
+		if (!empty($data['filter_name'])) {
+			$sql .= " WHERE `name` LIKE '" . $this->db->escape($data['filter_name']) . "%'";
+		}
+
+		$sort_data = array(
+			'name',
+			'sort_order'
+		);
+
+		if (isset($data['sort']) && in_array($data['sort'], $sort_data)) {
+			$sql .= " ORDER BY " . $data['sort'];
+		} else {
+			$sql .= " ORDER BY `name`";
+		}
+
+		if (isset($data['order']) && ($data['order'] == 'DESC')) {
+			$sql .= " DESC";
+		} else {
+			$sql .= " ASC";
+		}
+
+		if (isset($data['start']) || isset($data['limit'])) {
+			if ($data['start'] < 0) {
+				$data['start'] = 0;
+			}
+
+			if ($data['limit'] < 1) {
+				$data['limit'] = 20;
+			}
+
+			$sql .= " LIMIT " . (int)$data['start'] . "," . (int)$data['limit'];
+		}
+
+		$query = $this->db->query($sql);
+
+		return $query->rows;
+	}
+
+	public function getTotalManufacturers() {
+		$query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "manufacturer`");
+
+		return $query->row['total'];
+	}
+}
